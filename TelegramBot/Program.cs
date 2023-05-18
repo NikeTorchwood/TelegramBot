@@ -15,6 +15,7 @@ namespace TelegramBot
         {
             Bot = new TelegramBotClient(Token);
             Bot.StartReceiving(UpdateHandler, ErrorHandler);
+            Console.WriteLine("Finished");
             Console.ReadKey();
         }
 
