@@ -7,37 +7,66 @@ namespace TelegramBot;
 
 public class ChooseStoreMenu : Menu
 {
-
     private readonly string _title = "Выбери магазин";
-    private readonly IReplyMarkup _markup = new ReplyKeyboardMarkup(new List<List<KeyboardButton>>()
+    private IReplyMarkup _markup;
+
+    private static async Task<IReplyMarkup> CreateMarkup()
+    {
+        if (ReportService.StoreList == null)
         {
-            new List<KeyboardButton>()
+            await TelegramService.SendMessage("Файл пустой нужно загрузить файл");
+            return new ReplyKeyboardMarkup(new List<KeyboardButton>
             {
-                new KeyboardButton("mainMenuButton")
-
-            },
-            new List<KeyboardButton>(){
-                new KeyboardButton("ChooseStore2")
-
-            },
-            new List<KeyboardButton>(){
-                new KeyboardButton("DownloadFiles3")
-            }
+                new("DownloadFileMenu"),
+                new("mainMenuButton")
+            });
         }
-    );
+
+        var keyboard = new List<List<KeyboardButton>>();
+        var rowButtons = new List<KeyboardButton>();
+        for (var i = 0; i < ReportService.StoreList.Count; i++)
+            if (i % 4 == 0)
+            {
+                rowButtons = new List<KeyboardButton> { new(ReportService.StoreList[i].Code) };
+                keyboard.Add(rowButtons);
+            }
+            else
+            {
+                rowButtons.Add(new KeyboardButton(ReportService.StoreList[i].Code));
+            }
+
+        keyboard.Add(new List<KeyboardButton>
+        {
+            new("mainMenuButton")
+        });
+
+        return new ReplyKeyboardMarkup(keyboard);
+    }
 
     public override async Task PrintStateMessage()
     {
-        await Program.Bot.SendTextMessageAsync(Program.ChatId, _title, replyMarkup: _markup);
+        _markup = await CreateMarkup();
+        await TelegramService.SendMessage(_title, _markup);
     }
 
-    public override Task NextMenu(MenuState menuState, Update update)
+    public override async Task NextMenu(MenuState menuState, Update update)
     {
-        if (update.Message.Text == "mainMenuButton")
+        if (ReportService.StoreList != null)
         {
-            menuState.State = new MainMenu();
-        }
+            foreach (var store in ReportService.StoreList.Where(store => store.Code == update.Message.Text))
+            {
+                ReportService.CurrentStore = store;
+                Console.WriteLine(ReportService.CurrentStore);
+                await TelegramService.SendMessage($"Был выбран магазин{ReportService.CurrentStore.Code}");
+                menuState.State = new MainMenu();
+            }
 
-        return Task.CompletedTask;
+        }
+        menuState.State = update.Message.Text switch
+        {
+            "mainMenuButton" => new MainMenu(),
+            "DownloadFileMenu" => new DownloadFileMenu(),
+            _ => menuState.State
+        };
     }
 }

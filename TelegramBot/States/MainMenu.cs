@@ -13,7 +13,7 @@ public class MainMenu : Menu
         {
             new List<KeyboardButton>()
             {
-                new KeyboardButton("mainMenuButton")
+                new KeyboardButton("GetStatus")
 
             },
             new List<KeyboardButton>(){
@@ -25,10 +25,9 @@ public class MainMenu : Menu
             }
         }
     );
-
     public override async Task PrintStateMessage()
     {
-        await Program.Bot.SendTextMessageAsync(Program.ChatId, _title, replyMarkup: _markup);
+        await TelegramService.SendMessage(_title, _markup);
     }
 
     public override Task NextMenu(MenuState menuState, Update update)
@@ -43,6 +42,19 @@ public class MainMenu : Menu
             menuState.State = new DownloadFileMenu();
         }
 
+        if (update.Message.Text == "GetStatus")
+        {
+            GetStatus();
+        }
+
         return Task.CompletedTask;
+    }
+
+    private void GetStatus()
+    {
+        TelegramService.SendMessage($"Пользователь: {TelegramService.User}");
+        TelegramService.SendMessage(ReportService.CurrentStore != null
+            ? ReportService.CurrentStore.Code
+            : "Магазин еще не выбран");
     }
 }
