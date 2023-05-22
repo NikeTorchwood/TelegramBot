@@ -1,7 +1,9 @@
 ﻿using System.Threading;
+using Aspose.Cells;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Services;
 
 namespace TelegramBot.States;
 
@@ -13,36 +15,62 @@ public class MainMenu : Menu
         {
             new List<KeyboardButton>()
             {
-                new KeyboardButton("mainMenuButton")
+                new KeyboardButton("Печатать отчет"),
 
             },
             new List<KeyboardButton>(){
-                new KeyboardButton("ChooseStore")
+                new KeyboardButton("Выбрать магазин")
 
             },
             new List<KeyboardButton>(){
-                new KeyboardButton("DownloadFiles")
+                new KeyboardButton("Загрузить отчет")
             }
         }
     );
-
     public override async Task PrintStateMessage()
     {
-        await Program.Bot.SendTextMessageAsync(Program.ChatId, _title, replyMarkup: _markup);
+        await TelegramService.SendMessage(_title, _markup);
     }
 
-    public override Task NextMenu(MenuState menuState, Update update)
+    public override async Task NextMenu(MenuState menuState, Update update)
     {
-        if (update.Message.Text == "ChooseStore")
+        try
         {
-            menuState.State = new ChooseStoreMenu();
+            TelegramService.Workbook = new Workbook("../economic.xlsx");
         }
-
-        if (update.Message.Text == "DownloadFiles")
+        catch (FileNotFoundException e)
         {
-            menuState.State = new DownloadFileMenu();
+            Console.WriteLine("e");
         }
+        switch (update.Message.Text)
+        {
+            case "Выбрать магазин":
+                menuState.State = new ChooseStoreMenu();
+                break;
+            case "Загрузить отчет":
+                menuState.State = new DownloadFileMenu();
+                break;
+            case "Печатать отчет":
+                await TelegramService.SendMessage("Попал в метод печати отчета");
+                await PrintReport();
+                break;
+            default:
+                await TelegramService.SendMessage("не понял тебя, нажми еще раз");
+                menuState.State = new MainMenu();
+                break;
+        }
+    }
 
-        return Task.CompletedTask;
+    private static async Task PrintReport()
+    {
+        if (TelegramService.CurrentStore == null || TelegramService.Workbook == null)
+        {
+            await TelegramService.SendMessage("Магазин не выбран, выбери магазин");
+        }
+        else
+        {
+            var report = await DatabaseService.GetReportStore(TelegramService.CurrentStore.Name, TelegramService.ConnectionString);
+            await TelegramService.SendMessage(report);
+        }
     }
 }
