@@ -38,7 +38,7 @@ public class MainMenu : Menu
         {
             TelegramService.Workbook = new Workbook("../economic.xlsx");
         }
-        catch (FileNotFoundException e)
+        catch (FileNotFoundException)
         {
             Console.WriteLine("e");
         }
@@ -73,14 +73,7 @@ public class MainMenu : Menu
             await TelegramService.SendMessage(report);
         }
 
-        return Task.CompletedTask;
     }
 
-    private void GetStatus()
-    {
-        TelegramService.SendMessage($"Пользователь: {TelegramService.User}");
-        TelegramService.SendMessage(ReportService.CurrentStore != null
-            ? ReportService.CurrentStore.Code
-            : "Магазин еще не выбран");
-    }
+ 
 }

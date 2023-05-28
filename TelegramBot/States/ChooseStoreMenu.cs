@@ -63,9 +63,9 @@ public class ChooseStoreMenu : Menu
         {
             foreach (var store in _storeList.Where(store => update.Message.Text == store))
             {
+                TelegramService.SendMessage($"Был выбран магазин {store}");
                 TelegramService.CurrentStore =
                     new Store(store, TelegramService.directionList, TelegramService.Workbook);
-                await TelegramService.SendMessage($"Был выбран магазин {store}");
             }
 
             menuState.State = new MainMenu();

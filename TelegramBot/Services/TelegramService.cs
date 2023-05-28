@@ -44,13 +44,12 @@ namespace TelegramBot.Services
             throw new NotImplementedException();
         }
 
-        private static Task UpdateHandler(ITelegramBotClient client, Update update, CancellationToken ct)
+        private static async Task UpdateHandler(ITelegramBotClient client, Update update, CancellationToken ct)
         {
             if (update.Message != null)
                 ChatId = update.Message.Chat.Id;
-            _menuState ??= new MenuState(new DownloadFileMenu());
+            _menuState ??= new MenuState(new MainMenu());
             _menuState.NextState(update);
-            return Task.CompletedTask;
         }
 
         public static async Task SendMessage(string text, IReplyMarkup markup = null)

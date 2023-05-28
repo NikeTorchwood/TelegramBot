@@ -61,7 +61,6 @@ public class DownloadFileMenu : Menu
                 }
         }
 
-        ReportService.Update();
     }
 }
 

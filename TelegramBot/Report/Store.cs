@@ -21,7 +21,7 @@ namespace TelegramBot.Report
 
         private static int GetStoreRank(Workbook workbook, string storeName)
         {
-            var sheet = ReportHelper.GetSheet("Рейтинг ОП", workbook);
+            var sheet = ReportHelper.GetSheet("Рейтинг Магазина", workbook);
             var row = sheet.Cells.Find(storeName, sheet.Cells.FirstCell).Row;
             var column = ReportHelper.FindColumnNames("общий", "ранг", sheet);
             return int.Parse(sheet.Cells[row, column].Value.ToString());

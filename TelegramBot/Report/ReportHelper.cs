@@ -13,7 +13,7 @@ namespace TelegramBot.Report
             ("МТСД дебетовые", "Карты дебетовые"),
 
         };
-            var dataSheet = GetSheet("Данные ОП", workbook);
+            var dataSheet = GetSheet("Данные Магазина", workbook);
             foreach (var corretion in corrections)
             {
                 var column = FindColumnNames(corretion.Item1, "Факт", dataSheet);
@@ -33,7 +33,7 @@ namespace TelegramBot.Report
 
         public static List<string> GetStoreNames(Workbook workbook)
         {
-            var sheet = GetSheet("Данные ОП", workbook);
+            var sheet = GetSheet("Данные Магазина", workbook);
             var result = new List<string>();
             var column = sheet.Cells.Find("Магазин", sheet.Cells.FirstCell).Column;
             for (var i = 1; i <= sheet.Cells.MaxDataRow; i++)
