@@ -72,5 +72,15 @@ public class MainMenu : Menu
             var report = await DatabaseService.GetReportStore(TelegramService.CurrentStore.Name, TelegramService.ConnectionString);
             await TelegramService.SendMessage(report);
         }
+
+        return Task.CompletedTask;
+    }
+
+    private void GetStatus()
+    {
+        TelegramService.SendMessage($"Пользователь: {TelegramService.User}");
+        TelegramService.SendMessage(ReportService.CurrentStore != null
+            ? ReportService.CurrentStore.Code
+            : "Магазин еще не выбран");
     }
 }
