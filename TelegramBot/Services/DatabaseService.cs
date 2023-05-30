@@ -8,6 +8,7 @@ public static class DatabaseService
 {
     public static async Task UpdateDatabaseAsync(Workbook workbook, string connectionString)
     {
+        Console.WriteLine("попал в метод обновления бд");
         ReportHelper.FixReport(workbook);
         await RemoveUnnecessaryStores(workbook, connectionString);
         await AddStoreList(TelegramService.directionList, workbook, connectionString);

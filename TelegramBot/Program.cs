@@ -6,8 +6,9 @@ public class Program
 {
     private static void Main()
     {
+
         TelegramService.Start();
         Console.WriteLine("Finished");
-        Console.ReadKey();
+        Console.In.ReadLine();
     }
 }

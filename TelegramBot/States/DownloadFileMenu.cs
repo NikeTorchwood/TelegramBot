@@ -37,6 +37,8 @@ public class DownloadFileMenu : Menu
                 break;
             case MessageType.Document:
             {
+                await TelegramService.SendMessage("Обновляю данные, дождись скачивания данных...",
+                    new ReplyKeyboardRemove());
                 var fileId = update.Message.Document.FileId;
                 var fileInfo = await TelegramService.Bot.GetFileAsync(fileId);
                 var filePath = fileInfo.FilePath;

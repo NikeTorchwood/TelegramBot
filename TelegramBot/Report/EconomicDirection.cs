@@ -22,7 +22,7 @@ public class EconomicDirection
         Fact = dataSheet.Cells[row, factColumn].Type != CellValueType.IsString
             ? dataSheet.Cells[row, factColumn].IntValue
             : 0;
-        var rankSheet = ReportHelper.GetSheet("Рейтинг Магазинаa", workbook);
+        var rankSheet = ReportHelper.GetSheet("Рейтинг Магазина", workbook);
         var rankColumn = ReportHelper.FindColumnNames(name, "Ранг", rankSheet);
         Rank = rankColumn == 0 ? 0 : rankSheet.Cells[row, rankColumn].IntValue;
     }

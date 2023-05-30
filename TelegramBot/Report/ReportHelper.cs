@@ -1,4 +1,5 @@
-﻿using Aspose.Cells;
+﻿using System.Diagnostics.Metrics;
+using Aspose.Cells;
 
 namespace TelegramBot.Report;
 
@@ -22,7 +23,7 @@ public static class ReportHelper
 
     public static Worksheet? GetSheet(string nameSheet, Workbook workbook)
     {
-        return workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == nameSheet);
+        return workbook.Worksheets.FirstOrDefault(worksheet => worksheet.Name == nameSheet);
     }
 
     public static List<Store> GetStores(List<string> storeList, List<string> directionList, Workbook workbook)

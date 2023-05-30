@@ -35,7 +35,6 @@ public static class TelegramService
     public static void Start()
     {
         Bot = new TelegramBotClient(token);
-        _menuState = new MenuState(new MainMenu());
         Bot.StartReceiving(UpdateHandler, ErrorHandler);
     }
 
@@ -48,6 +47,7 @@ public static class TelegramService
     {
         if (update.Message != null)
             ChatId = update.Message.Chat.Id;
+        _menuState ??= new MenuState(new MainMenu());
         _menuState.NextState(update);
     }
 
