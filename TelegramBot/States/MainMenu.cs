@@ -34,14 +34,6 @@ public class MainMenu : Menu
 
     public override async Task NextMenu(MenuState menuState, Update update)
     {
-        try
-        {
-            TelegramService.Workbook = new Workbook("../economic.xlsx");
-        }
-        catch (FileNotFoundException)
-        {
-            Console.WriteLine("e");
-        }
         switch (update.Message.Text)
         {
             case "Выбрать магазин":
@@ -63,13 +55,13 @@ public class MainMenu : Menu
 
     private static async Task PrintReport()
     {
-        if (TelegramService.CurrentStore == null || TelegramService.Workbook == null)
+        if (string.IsNullOrEmpty(TelegramService.CurrentStoreCode))
         {
             await TelegramService.SendMessage("Магазин не выбран, выбери магазин");
         }
         else
         {
-            var report = await DatabaseService.GetReportStore(TelegramService.CurrentStore.Name, TelegramService.ConnectionString);
+            var report = await DatabaseService.GetReportStore(TelegramService.CurrentStoreCode, TelegramService.ConnectionString);
             await TelegramService.SendMessage(report);
         }
 

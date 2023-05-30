@@ -1,8 +1,10 @@
 ﻿using Aspose.Cells;
+using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Report;
 using TelegramBot.Services;
 using File = System.IO.File;
 
@@ -39,23 +41,22 @@ public class DownloadFileMenu : Menu
             case MessageType.Document:
                 {
                     var fileId = update.Message.Document.FileId;
-                    const string destinationFilePath = "../economic.xlsx";
-                    await using (Stream fileStream = File.Create(destinationFilePath))
-                    {
+                    var fileInfo = await TelegramService.Bot.GetFileAsync(fileId);
 
-                        await TelegramService.SendMessage("Я запустил загрузку файла, дождись чтобы он скачался",
-                            new ReplyKeyboardRemove());
-                        var tasks = async () =>
-                        {
-                            await TelegramService.Bot.GetInfoAndDownloadFileAsync(fileId, fileStream);
-                        };
-                        await tasks.Invoke().ContinueWith((asd) =>
-                        {
-                            TelegramService.Workbook = new Workbook("../economic.xlsx");
-                        });
-                    }
-                    await TelegramService.SendMessage($"Файл скачан");
-                    await DatabaseService.UpdateDatabaseAsync(TelegramService.Workbook, TelegramService.ConnectionString);
+                    var filePath = fileInfo.FilePath;
+                    const string destinationFilePath = "../economic.xlsx";
+
+                    var fileStream = new FileStream(destinationFilePath, FileMode.OpenOrCreate);
+                    await TelegramService.Bot.DownloadFileAsync(
+                        filePath: filePath,
+                        destination: fileStream);
+                    var workbook = new Workbook(fileStream);
+
+                    await DatabaseService.UpdateDatabaseAsync(workbook, TelegramService.ConnectionString);
+                    
+                    fileStream.Close();
+                    var fi = new FileInfo(destinationFilePath);
+                    fi.Delete();
                     menuState.State = new MainMenu();
                     break;
                 }

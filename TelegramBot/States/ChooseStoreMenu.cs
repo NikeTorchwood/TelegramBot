@@ -11,23 +11,34 @@ public class ChooseStoreMenu : Menu
 {
     private readonly string _title = "Выбери магазин";
     private IReplyMarkup _markup;
-    private static List<string> _storeList = new();
+    private static List<string?> _storeList = new();
 
     private static async Task<IReplyMarkup> CreateMarkup()
     {
-        if (TelegramService.Workbook == null)
+        //if (TelegramService.Workbook == null)
+        //{
+        //    await TelegramService.SendMessage("Файл пустой нужно загрузить файл");
+        //    return new ReplyKeyboardMarkup(new List<KeyboardButton>
+        //    {
+        //        new("Загрузить отчет"),
+        //        new("Главное Меню")
+        //    });
+        //}
+        //else
+        //{
+        _storeList = await DatabaseService.GetStoreList(TelegramService.ConnectionString);
+        if (_storeList == null)
         {
             await TelegramService.SendMessage("Файл пустой нужно загрузить файл");
             return new ReplyKeyboardMarkup(new List<KeyboardButton>
-            {
-                new("Загрузить отчет"),
-                new("Главное Меню")
-            });
+                    {
+                        new("Загрузить отчет"),
+                        new("Главное Меню")
+                    });
+
         }
         else
         {
-
-            _storeList = ReportHelper.GetStoreNames(TelegramService.Workbook);
 
             var keyboard = new List<List<KeyboardButton>>();
             var rowButtons = new List<KeyboardButton>();
@@ -51,33 +62,33 @@ public class ChooseStoreMenu : Menu
         }
     }
 
-    public override async Task PrintStateMessage()
-    {
-        _markup = await CreateMarkup();
-        await TelegramService.SendMessage(_title, _markup);
-    }
 
-    public override async Task NextMenu(MenuState menuState, Update update)
-    {
-        if (_storeList != null)
-        {
-            foreach (var store in _storeList.Where(store => update.Message.Text == store))
-            {
-                TelegramService.SendMessage($"Был выбран магазин {store}");
-                TelegramService.CurrentStore =
-                    new Store(store, TelegramService.directionList, TelegramService.Workbook);
-            }
+public override async Task PrintStateMessage()
+{
+    _markup = await CreateMarkup();
+    await TelegramService.SendMessage(_title, _markup);
+}
 
-            menuState.State = new MainMenu();
-        }
-        else
+public override async Task NextMenu(MenuState menuState, Update update)
+{
+    if (_storeList != null)
+    {
+        foreach (var store in _storeList.Where(store => update.Message.Text == store))
         {
-            menuState.State = update.Message.Text switch
-            {
-                "Главное Меню" => new MainMenu(),
-                "Загрузить отчет" => new DownloadFileMenu(),
-                _ => menuState.State
-            };
+            TelegramService.SendMessage($"Был выбран магазин {store}");
+            TelegramService.CurrentStoreCode = store;
         }
+
+        menuState.State = new MainMenu();
     }
+    else
+    {
+        menuState.State = update.Message.Text switch
+        {
+            "Главное Меню" => new MainMenu(),
+            "Загрузить отчет" => new DownloadFileMenu(),
+            _ => menuState.State
+        };
+    }
+}
 }

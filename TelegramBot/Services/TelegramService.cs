@@ -12,7 +12,7 @@ namespace TelegramBot.Services
         public static ITelegramBotClient? Bot { get; set; }
         private const string Token = "6181768808:AAGqAC9vKIa6YUPRPbJMZGvUcMUaWLrmVbE";
         private static long ChatId { get; set; }
-        public static Workbook Workbook { get; set; }
+        //public static Workbook Workbook { get; set; }
 
         public static readonly string ConnectionString =
             "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\ntwdc\\source\\repos\\TelegramBot\\TelegramBot\\TelegramBotDB.mdf;Integrated Security=True";
@@ -33,10 +33,11 @@ namespace TelegramBot.Services
         };
 
         private static MenuState? _menuState;
-        public static Store CurrentStore = null;
+        public static string CurrentStoreCode = string.Empty;
         public static void Start()
         {
             Bot = new TelegramBotClient(Token);
+            _menuState = new MenuState(new DownloadFileMenu());
             Bot.StartReceiving(UpdateHandler, ErrorHandler);
         }
         private static Task ErrorHandler(ITelegramBotClient arg1, Exception arg2, CancellationToken arg3)
@@ -48,7 +49,7 @@ namespace TelegramBot.Services
         {
             if (update.Message != null)
                 ChatId = update.Message.Chat.Id;
-            _menuState ??= new MenuState(new MainMenu());
+            //_menuState ??= new MenuState(new DownloadFileMenu());
             _menuState.NextState(update);
         }
 
