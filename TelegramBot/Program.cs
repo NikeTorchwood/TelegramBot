@@ -1,17 +1,13 @@
 ﻿using TelegramBot.Services;
 
-namespace TelegramBot
+namespace TelegramBot;
+
+public class Program
 {
-    public class Program
+    private static void Main()
     {
-        private static void Main()
-        {
-            TelegramService.Start();
-            Console.WriteLine("Finished");
-            Console.ReadKey();
-        }
-
+        TelegramService.Start();
+        Console.WriteLine("Finished");
+        Console.ReadKey();
     }
-
-   
 }

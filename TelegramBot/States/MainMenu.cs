@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using Aspose.Cells;
-using Telegram.Bot;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBot.Services;
 
@@ -67,5 +64,5 @@ public class MainMenu : Menu
 
     }
 
- 
+
 }

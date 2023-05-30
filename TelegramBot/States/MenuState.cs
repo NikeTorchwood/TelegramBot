@@ -10,6 +10,7 @@ public class MenuState
     {
         State = menu;
     }
+
     public void NextState(Update update)
     {
         State.NextMenu(this, update);

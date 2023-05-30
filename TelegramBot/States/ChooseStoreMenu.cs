@@ -1,11 +1,8 @@
-﻿using Telegram.Bot;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
-using TelegramBot.Report;
 using TelegramBot.Services;
-using TelegramBot.States;
 
-namespace TelegramBot;
+namespace TelegramBot.States;
 
 public class ChooseStoreMenu : Menu
 {
@@ -31,64 +28,59 @@ public class ChooseStoreMenu : Menu
         {
             await TelegramService.SendMessage("Файл пустой нужно загрузить файл");
             return new ReplyKeyboardMarkup(new List<KeyboardButton>
-                    {
-                        new("Загрузить отчет"),
-                        new("Главное Меню")
-                    });
-
+            {
+                new("Загрузить отчет"),
+                new("Главное Меню")
+            });
         }
-        else
-        {
 
-            var keyboard = new List<List<KeyboardButton>>();
-            var rowButtons = new List<KeyboardButton>();
-            for (var i = 0; i < _storeList.Count; i++)
-                if (i % 4 == 0)
-                {
-                    rowButtons = new List<KeyboardButton> { new(_storeList[i]) };
-                    keyboard.Add(rowButtons);
-                }
-                else
-                {
-                    rowButtons.Add(new KeyboardButton(_storeList[i]));
-                }
+        var keyboard = new List<List<KeyboardButton>>();
+        var rowButtons = new List<KeyboardButton>();
+        for (var i = 0; i < _storeList.Count; i++)
+            if (i % 4 == 0)
+            {
+                rowButtons = new List<KeyboardButton> { new(_storeList[i]) };
+                keyboard.Add(rowButtons);
+            }
+            else
+            {
+                rowButtons.Add(new KeyboardButton(_storeList[i]));
+            }
 
-            keyboard.Add(new List<KeyboardButton>
+        keyboard.Add(new List<KeyboardButton>
         {
             new("Главное Меню")
         });
 
-            return new ReplyKeyboardMarkup(keyboard);
+        return new ReplyKeyboardMarkup(keyboard);
+    }
+
+    public override async Task PrintStateMessage()
+    {
+        _markup = await CreateMarkup();
+        await TelegramService.SendMessage(_title, _markup);
+    }
+
+    public override async Task NextMenu(MenuState menuState, Update update)
+    {
+        if (_storeList != null)
+        {
+            foreach (var store in _storeList.Where(store => update.Message.Text == store))
+            {
+                TelegramService.SendMessage($"Был выбран магазин {store}");
+                TelegramService.CurrentStoreCode = store;
+            }
+
+            menuState.State = new MainMenu();
+        }
+        else
+        {
+            menuState.State = update.Message.Text switch
+            {
+                "Главное Меню" => new MainMenu(),
+                "Загрузить отчет" => new DownloadFileMenu(),
+                _ => menuState.State
+            };
         }
     }
-
-
-public override async Task PrintStateMessage()
-{
-    _markup = await CreateMarkup();
-    await TelegramService.SendMessage(_title, _markup);
-}
-
-public override async Task NextMenu(MenuState menuState, Update update)
-{
-    if (_storeList != null)
-    {
-        foreach (var store in _storeList.Where(store => update.Message.Text == store))
-        {
-            TelegramService.SendMessage($"Был выбран магазин {store}");
-            TelegramService.CurrentStoreCode = store;
-        }
-
-        menuState.State = new MainMenu();
-    }
-    else
-    {
-        menuState.State = update.Message.Text switch
-        {
-            "Главное Меню" => new MainMenu(),
-            "Загрузить отчет" => new DownloadFileMenu(),
-            _ => menuState.State
-        };
-    }
-}
 }
