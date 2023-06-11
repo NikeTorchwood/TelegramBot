@@ -161,14 +161,19 @@ public static class DatabaseService
                     var plan = reader.GetInt32(1);
                     var fact = reader.GetInt32(2);
                     var rank = reader.GetInt32(3);
+                    var persent = (double)fact / (double)plan;
                     if (rank != 0)
                         result += $"""
-                        {name}/{plan}/{fact}/{rank}
+                        -----------------------------------
+                        {name}/План/Факт/% - Рейтинг
+                        {plan}/{fact}/{persent:P1}  - {rank}
 
                         """;
                     else
                         result += $"""
-                        {name}/{plan}/{fact}/
+                        -----------------------------------
+                        {name}/План/Факт/% 
+                        {plan}/{fact}/{persent:P1} 
 
                         """;
                 }

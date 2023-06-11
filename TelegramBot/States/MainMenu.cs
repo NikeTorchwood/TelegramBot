@@ -13,15 +13,15 @@ public class MainMenu : Menu
             new List<KeyboardButton>()
             {
                 new KeyboardButton("Печатать отчет"),
-
+                new KeyboardButton("Выбрать магазин")
             },
             new List<KeyboardButton>(){
-                new KeyboardButton("Выбрать магазин")
-
+                new KeyboardButton("Инструкция")
             },
             new List<KeyboardButton>(){
                 new KeyboardButton("Загрузить отчет")
             }
+
         }
     );
     public override async Task PrintStateMessage()
@@ -40,14 +40,34 @@ public class MainMenu : Menu
                 menuState.State = new DownloadFileMenu();
                 break;
             case "Печатать отчет":
-                await TelegramService.SendMessage("Попал в метод печати отчета");
                 await PrintReport();
+                break;
+            case "Инструкция":
+                await PrintInstrucion();
                 break;
             default:
                 await TelegramService.SendMessage("не понял тебя, нажми еще раз");
                 menuState.State = new MainMenu();
                 break;
         }
+    }
+
+    private static async Task PrintInstrucion()
+    {
+        const string instruction = $"""
+            Привет, здесь инструкция по использованию
+            Бот может печатать отчет по магазину, основывается он только на тех данных, которые мы туда загрузили.
+            Сейчас бот воспринимает только одного пользователя, в ближайшее время отладим поддержку нескольких пользователей.
+            Если у тебя он печатает отчет не по твоему магазину - выбери заного свой магазин и повтори
+          
+            Немного о кнопочках
+            => Печать отчета: Печатает отчет по выбранному магазину;
+            => Выбрать магазин: После загрузки файла берет актуальный список магазинов и выбирает магазин, который можешь выбрать;
+            => Загрузить отчет: Меню куда мы скидываем детализацию. !Важно! Если ты отправишь что-то кроме детализации продаж - то скорей всего бот сломается, я хз я не проверял);
+
+            Хорошего пользования!
+            """;
+        await TelegramService.SendMessage(instruction);
     }
 
     private static async Task PrintReport()

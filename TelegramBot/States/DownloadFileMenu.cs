@@ -4,6 +4,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBot.Services;
+using File = System.IO.File;
 
 namespace TelegramBot.States;
 
@@ -36,25 +37,43 @@ public class DownloadFileMenu : Menu
                 await TelegramService.SendMessage("Выполни инструкцию");
                 break;
             case MessageType.Document:
-            {
-                await TelegramService.SendMessage("Обновляю данные, дождись скачивания данных...",
-                    new ReplyKeyboardRemove());
-                var fileId = update.Message.Document.FileId;
-                var fileInfo = await TelegramService.Bot.GetFileAsync(fileId);
-                var filePath = fileInfo.FilePath;
-                const string destinationFilePath = "../economic.xlsx";
-                var fileStream = new FileStream(destinationFilePath, FileMode.OpenOrCreate);
-                await TelegramService.Bot.DownloadFileAsync(
-                    filePath,
-                    fileStream);
-                var workbook = new Workbook(fileStream);
-                await DatabaseService.UpdateDatabaseAsync(workbook, TelegramService.ConnectionString);
-                fileStream.Close();
-                var fi = new FileInfo(destinationFilePath);
-                fi.Delete();
-                menuState.State = new MainMenu();
-                break;
-            }
+                {
+                    await TelegramService.SendMessage("Обновляю данные, дождись скачивания данных...",
+                        new ReplyKeyboardRemove());
+                    var fileId = update.Message.Document.FileId;
+                    var fileInfo = await TelegramService.Bot.GetFileAsync(fileId);
+                    var filePath = fileInfo.FilePath;
+                    var destinationFilePath = $"{Environment.CurrentDirectory}/economic.xlsx";
+                    Console.WriteLine($"Путь скачивания файла: {destinationFilePath}");
+                    try
+                    {
+                        var fileStream = new FileStream(destinationFilePath, FileMode.OpenOrCreate);
+                        await TelegramService.Bot.DownloadFileAsync(
+                            filePath,
+                            fileStream);
+                        var workbook = new Workbook(fileStream);
+                        await DatabaseService.UpdateDatabaseAsync(workbook, TelegramService.ConnectionString);
+                        fileStream.Close();
+                        Console.WriteLine("Скачивание файла произошло успешно");
+                    }
+                    catch (Exception e)
+                    {
+                        
+                        Console.WriteLine(e);
+                    }
+                    try
+                    {
+                        var fi = new FileInfo(destinationFilePath);
+                        fi.Delete();
+                        Console.WriteLine("Удаление файла произошло успешно");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                    menuState.State = new MainMenu();
+                    break;
+                }
         }
     }
 }

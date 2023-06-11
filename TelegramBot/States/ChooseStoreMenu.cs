@@ -12,18 +12,14 @@ public class ChooseStoreMenu : Menu
 
     private static async Task<IReplyMarkup> CreateMarkup()
     {
-        //if (TelegramService.Workbook == null)
-        //{
-        //    await TelegramService.SendMessage("Файл пустой нужно загрузить файл");
-        //    return new ReplyKeyboardMarkup(new List<KeyboardButton>
-        //    {
-        //        new("Загрузить отчет"),
-        //        new("Главное Меню")
-        //    });
-        //}
-        //else
-        //{
-        _storeList = await DatabaseService.GetStoreList(TelegramService.ConnectionString);
+        try
+        {
+            _storeList = await DatabaseService.GetStoreList(TelegramService.ConnectionString);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
         if (_storeList == null)
         {
             await TelegramService.SendMessage("Файл пустой нужно загрузить файл");
@@ -67,7 +63,7 @@ public class ChooseStoreMenu : Menu
         {
             foreach (var store in _storeList.Where(store => update.Message.Text == store))
             {
-                TelegramService.SendMessage($"Был выбран магазин {store}");
+                await TelegramService.SendMessage($"Был выбран магазин {store}");
                 TelegramService.CurrentStoreCode = store;
             }
 

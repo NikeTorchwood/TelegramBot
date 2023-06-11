@@ -9,11 +9,9 @@ namespace TelegramBot.Services;
 public static class TelegramService
 {
     public static ITelegramBotClient? Bot { get; set; }
-    private static readonly string token = ConfigurationManager.ConnectionStrings["token"].ConnectionString;
+    private static readonly string token = ConfigurationManager.ConnectionStrings["releaseToken"].ConnectionString;
     private static long ChatId { get; set; }
-
-    public static readonly string ConnectionString = ConfigurationManager.ConnectionStrings["LocalDB"].ConnectionString;
-
+    public static string ConnectionString { get; } = ConfigurationManager.ConnectionStrings["LocalDB"].ConnectionString;
     public static readonly List<string> directionList = new()
     {
         "SIM Продажи",

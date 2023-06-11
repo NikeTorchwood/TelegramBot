@@ -8,7 +8,7 @@ public class Program
     {
 
         TelegramService.Start();
-        Console.WriteLine("Finished");
+        Console.WriteLine("Started");
         Console.In.ReadLine();
     }
 }
