@@ -10,5 +10,6 @@ public class Program
         TelegramService.Start();
         Console.WriteLine("Started");
         Console.In.ReadLine();
+        Console.WriteLine("Program was closed");
     }
 }

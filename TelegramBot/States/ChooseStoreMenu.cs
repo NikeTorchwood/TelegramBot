@@ -14,7 +14,7 @@ public class ChooseStoreMenu : Menu
     {
         try
         {
-            _storeList = await DatabaseService.GetStoreList(TelegramService.ConnectionString);
+            _storeList = await DatabaseReportService.GetStoreList();
         }
         catch (Exception e)
         {

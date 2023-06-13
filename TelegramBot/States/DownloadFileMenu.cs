@@ -1,4 +1,5 @@
-﻿using Aspose.Cells;
+﻿using System.Diagnostics;
+using Aspose.Cells;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -38,39 +39,44 @@ public class DownloadFileMenu : Menu
                 break;
             case MessageType.Document:
                 {
+                    var sw = new Stopwatch();
+                    sw.Restart();
                     await TelegramService.SendMessage("Обновляю данные, дождись скачивания данных...",
                         new ReplyKeyboardRemove());
                     var fileId = update.Message.Document.FileId;
                     var fileInfo = await TelegramService.Bot.GetFileAsync(fileId);
                     var filePath = fileInfo.FilePath;
                     var destinationFilePath = $"{Environment.CurrentDirectory}/economic.xlsx";
-                    Console.WriteLine($"Путь скачивания файла: {destinationFilePath}");
+                    var sw1 = new Stopwatch();
+                    sw1.Restart();
                     try
                     {
                         var fileStream = new FileStream(destinationFilePath, FileMode.OpenOrCreate);
                         await TelegramService.Bot.DownloadFileAsync(
                             filePath,
                             fileStream);
+                        sw1.Stop();
+                        Console.WriteLine($"Скачивание файла произошло успешно. Время скачивания {sw1.Elapsed}");
                         var workbook = new Workbook(fileStream);
-                        await DatabaseService.UpdateDatabaseAsync(workbook, TelegramService.ConnectionString);
+                        await DatabaseReportService.UpdateDatabaseAsync(workbook);
                         fileStream.Close();
-                        Console.WriteLine("Скачивание файла произошло успешно");
                     }
                     catch (Exception e)
                     {
-                        
+
                         Console.WriteLine(e);
                     }
                     try
                     {
                         var fi = new FileInfo(destinationFilePath);
                         fi.Delete();
-                        Console.WriteLine("Удаление файла произошло успешно");
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
                     }
+                    sw.Stop();
+                    Console.WriteLine($"На скачивание и обновление БД понадобилось {sw.Elapsed}");
                     menuState.State = new MainMenu();
                     break;
                 }

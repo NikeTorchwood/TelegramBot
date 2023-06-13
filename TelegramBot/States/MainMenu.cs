@@ -78,7 +78,7 @@ public class MainMenu : Menu
         }
         else
         {
-            var report = await DatabaseService.GetReportStore(TelegramService.CurrentStoreCode, TelegramService.ConnectionString);
+            var report = await DatabaseReportService.GetReportStore(TelegramService.CurrentStoreCode);
             await TelegramService.SendMessage(report);
         }
 
