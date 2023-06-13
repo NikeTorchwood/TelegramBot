@@ -9,9 +9,9 @@ namespace TelegramBot.Services;
 public static class TelegramService
 {
     public static ITelegramBotClient? Bot { get; set; }
-    private static readonly string token = ConfigurationManager.ConnectionStrings["releaseToken"].ConnectionString;
+    private static readonly string token = ConfigurationManager.ConnectionStrings["debugToken"].ConnectionString;
     private static long ChatId { get; set; }
-    public static string ConnectionString { get; } = ConfigurationManager.ConnectionStrings["LocalDB"].ConnectionString;
+    public static string ConnectionString { get; } = ConfigurationManager.ConnectionStrings["debugDB"].ConnectionString;
     public static readonly List<string> directionList = new()
     {
         "SIM Продажи",
@@ -43,6 +43,7 @@ public static class TelegramService
 
     private static async Task UpdateHandler(ITelegramBotClient client, Update update, CancellationToken ct)
     {
+        var userId = update.Message.From.Id;
         if (update.Message != null)
             ChatId = update.Message.Chat.Id;
         _menuState ??= new MenuState(new MainMenu());
