@@ -26,7 +26,7 @@ namespace TelegramBot.Services
         {
             StoreList = GetListStoresFromReport(workbook);
         }
-        public List<Store> GetListStoresFromReport(Workbook workbook)
+        private List<Store> GetListStoresFromReport(Workbook workbook)
         {
             var report = new EconomicReport(workbook);
             var nameList = report.GetStoreNames();

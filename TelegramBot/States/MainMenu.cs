@@ -1,6 +1,8 @@
-﻿using Telegram.Bot.Types;
+﻿using System.Data.SqlClient;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBot.Services;
+using User = TelegramBot.Services.User;
 
 namespace TelegramBot.States;
 
@@ -29,25 +31,34 @@ public class MainMenu : Menu
         await TelegramService.SendMessage(_title, _markup);
     }
 
-    public override async Task NextMenu(MenuState menuState, Update update)
+    public override async Task NextMenu(MenuState menuState, Update update, User user)
     {
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand(string.Empty, connection);
         switch (update.Message.Text)
         {
             case "Выбрать магазин":
+                command.CommandText = $"update users set UserState = {(int)UserState.ChooseStore} where UserId = {user.Id};";
+                await command.ExecuteNonQueryAsync();
                 menuState.State = new ChooseStoreMenu();
+                await menuState.State.PrintStateMessage();
                 break;
             case "Загрузить отчет":
+                command.CommandText = $"update users set UserState = {(int)UserState.DownloadFile} where UserId = {user.Id};";
+                await command.ExecuteNonQueryAsync();
                 menuState.State = new DownloadFileMenu();
+                await menuState.State.PrintStateMessage();
                 break;
             case "Печатать отчет":
-                await PrintReport();
+                await PrintReport(user);
                 break;
             case "Инструкция":
                 await PrintInstrucion();
                 break;
             default:
                 await TelegramService.SendMessage("не понял тебя, нажми еще раз");
-                menuState.State = new MainMenu();
+                await PrintStateMessage();
                 break;
         }
     }
@@ -70,18 +81,30 @@ public class MainMenu : Menu
         await TelegramService.SendMessage(instruction);
     }
 
-    private static async Task PrintReport()
+    private static async Task PrintReport(User user)
     {
-        if (string.IsNullOrEmpty(TelegramService.CurrentStoreCode))
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand($"select UserStoreCode from users where UserId = {user.Id};", connection);
+        var reader = await command.ExecuteReaderAsync();
+        if (reader.HasRows)
         {
-            await TelegramService.SendMessage("Магазин не выбран, выбери магазин");
+            var code = string.Empty;
+            while (await reader.ReadAsync())
+            {
+                code = reader.GetString(0);
+            }
+            await reader.CloseAsync();
+            if (string.IsNullOrEmpty(code))
+            {
+                await TelegramService.SendMessage("Магазин не выбран, выбери магазин");
+            }
+            else
+            {
+                var report = await DatabaseReportService.GetReportStore(code);
+                await TelegramService.SendMessage(report);
+            }
         }
-        else
-        {
-            var report = await DatabaseReportService.GetReportStore(TelegramService.CurrentStoreCode);
-            await TelegramService.SendMessage(report);
-        }
-
     }
 
 

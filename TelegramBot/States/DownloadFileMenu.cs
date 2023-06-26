@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Data.SqlClient;
+using System.Diagnostics;
 using Aspose.Cells;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -6,6 +7,7 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBot.Services;
 using File = System.IO.File;
+using User = TelegramBot.Services.User;
 
 namespace TelegramBot.States;
 
@@ -27,12 +29,18 @@ public class DownloadFileMenu : Menu
         await TelegramService.SendMessage(_title, _markup);
     }
 
-    public override async Task NextMenu(MenuState menuState, Update update)
+    public override async Task NextMenu(MenuState menuState, Update update, User user)
     {
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand(string.Empty, connection);
         switch (update.Message.Type)
         {
             case MessageType.Text when update.Message.Text == "Главное Меню":
+                command.CommandText = $"update users set UserState = {(int)UserState.MainMenu} where UserId = {user.Id};";
+                await command.ExecuteNonQueryAsync();
                 menuState.State = new MainMenu();
+                await menuState.State.PrintStateMessage();
                 break;
             case MessageType.Text:
                 await TelegramService.SendMessage("Выполни инструкцию");
@@ -77,7 +85,10 @@ public class DownloadFileMenu : Menu
                     }
                     sw.Stop();
                     Console.WriteLine($"На скачивание и обновление БД понадобилось {sw.Elapsed}");
+                    command.CommandText = $"update users set UserState = {(int)UserState.MainMenu} where UserId = {user.Id};";
+                    await command.ExecuteNonQueryAsync();
                     menuState.State = new MainMenu();
+                    await menuState.State.PrintStateMessage();
                     break;
                 }
         }

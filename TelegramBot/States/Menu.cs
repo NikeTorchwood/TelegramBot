@@ -1,4 +1,5 @@
 ﻿using Telegram.Bot.Types;
+using User = TelegramBot.Services.User;
 
 namespace TelegramBot.States;
 
@@ -6,8 +7,8 @@ public abstract class Menu
 {
     protected Menu()
     {
-        PrintStateMessage();
+        //PrintStateMessage();
     }
     public abstract Task PrintStateMessage();
-    public abstract Task NextMenu(MenuState menuState, Update update);
+    public abstract Task NextMenu(MenuState menuState, Update update, User user);
 }

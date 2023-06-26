@@ -72,7 +72,6 @@ public static class DatabaseReportService
                 Target.[Rank] = Source.[Rank]
                 when not matched then
                 insert([Name], [StoreCode], [Plan], [Fact], [Rank]) values(Source.[Name], Source.[StoreCode], Source.[Plan], Source.[Fact], Source.[Rank]);
-        
                 """;
         var connection = new SqlConnection(TelegramService.ConnectionString);
         await connection.OpenAsync();
