@@ -5,9 +5,10 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Entities.User;
 using TelegramBot.Services;
 using File = System.IO.File;
-using User = TelegramBot.Services.User;
+using User = TelegramBot.Entities.User.User;
 
 namespace TelegramBot.States;
 
@@ -37,8 +38,7 @@ public class DownloadFileMenu : Menu
         switch (update.Message.Type)
         {
             case MessageType.Text when update.Message.Text == "Главное Меню":
-                command.CommandText = $"update users set UserState = {(int)UserState.MainMenu} where UserId = {user.Id};";
-                await command.ExecuteNonQueryAsync();
+                await DatabaseService.UpdateUserState(user, UserState.MainMenu);
                 menuState.State = new MainMenu();
                 await menuState.State.PrintStateMessage();
                 break;
@@ -66,7 +66,7 @@ public class DownloadFileMenu : Menu
                         sw1.Stop();
                         Console.WriteLine($"Скачивание файла произошло успешно. Время скачивания {sw1.Elapsed}");
                         var workbook = new Workbook(fileStream);
-                        await DatabaseReportService.UpdateDatabaseAsync(workbook);
+                        await DatabaseService.UpdateReportData(workbook);
                         fileStream.Close();
                     }
                     catch (Exception e)
@@ -85,8 +85,7 @@ public class DownloadFileMenu : Menu
                     }
                     sw.Stop();
                     Console.WriteLine($"На скачивание и обновление БД понадобилось {sw.Elapsed}");
-                    command.CommandText = $"update users set UserState = {(int)UserState.MainMenu} where UserId = {user.Id};";
-                    await command.ExecuteNonQueryAsync();
+                    await DatabaseService.UpdateUserState(user, UserState.MainMenu);
                     menuState.State = new MainMenu();
                     await menuState.State.PrintStateMessage();
                     break;

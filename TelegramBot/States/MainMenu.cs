@@ -1,8 +1,9 @@
 ﻿using System.Data.SqlClient;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Entities.User;
 using TelegramBot.Services;
-using User = TelegramBot.Services.User;
+using User = TelegramBot.Entities.User.User;
 
 namespace TelegramBot.States;
 
@@ -33,20 +34,15 @@ public class MainMenu : Menu
 
     public override async Task NextMenu(MenuState menuState, Update update, User user)
     {
-        var connection = new SqlConnection(TelegramService.ConnectionString);
-        await connection.OpenAsync();
-        var command = new SqlCommand(string.Empty, connection);
         switch (update.Message.Text)
         {
             case "Выбрать магазин":
-                command.CommandText = $"update users set UserState = {(int)UserState.ChooseStore} where UserId = {user.Id};";
-                await command.ExecuteNonQueryAsync();
+                await DatabaseService.UpdateUserState(user, UserState.ChooseStore);
                 menuState.State = new ChooseStoreMenu();
                 await menuState.State.PrintStateMessage();
                 break;
             case "Загрузить отчет":
-                command.CommandText = $"update users set UserState = {(int)UserState.DownloadFile} where UserId = {user.Id};";
-                await command.ExecuteNonQueryAsync();
+                await DatabaseService.UpdateUserState(user, UserState.DownloadFile);
                 menuState.State = new DownloadFileMenu();
                 await menuState.State.PrintStateMessage();
                 break;
@@ -83,27 +79,15 @@ public class MainMenu : Menu
 
     private static async Task PrintReport(User user)
     {
-        var connection = new SqlConnection(TelegramService.ConnectionString);
-        await connection.OpenAsync();
-        var command = new SqlCommand($"select UserStoreCode from users where UserId = {user.Id};", connection);
-        var reader = await command.ExecuteReaderAsync();
-        if (reader.HasRows)
+        var code = await DatabaseService.GetUserStore(user);
+        if (string.IsNullOrEmpty(code))
         {
-            var code = string.Empty;
-            while (await reader.ReadAsync())
-            {
-                code = reader.GetString(0);
-            }
-            await reader.CloseAsync();
-            if (string.IsNullOrEmpty(code))
-            {
-                await TelegramService.SendMessage("Магазин не выбран, выбери магазин");
-            }
-            else
-            {
-                var report = await DatabaseReportService.GetReportStore(code);
-                await TelegramService.SendMessage(report);
-            }
+            await TelegramService.SendMessage("Магазин не выбран, выбери магазин");
+        }
+        else
+        {
+            var report = await DatabaseService.GetReportStore(code);
+            await TelegramService.SendMessage(report);
         }
     }
 

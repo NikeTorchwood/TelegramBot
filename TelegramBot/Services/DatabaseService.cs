@@ -1,19 +1,25 @@
 ﻿using Aspose.Cells;
-using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Text;
-using TelegramBot.Entities.Report;
+using Telegram.Bot.Types;
+using TelegramBot.Entities.User;
+using User = TelegramBot.Entities.User.User;
 
 namespace TelegramBot.Services;
 
-public static class DatabaseReportService
+public static class DatabaseService
 {
-    public static async Task UpdateDatabaseAsync(Workbook workbook)
+    public static async Task UpdateReportData(Workbook workbook)
     {
-        Console.WriteLine("Обновление БД запущено");
-        var sw = new Stopwatch();
-        sw.Restart();
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand(GetReportUpdateCmdString(workbook), connection);
+        command.ExecuteNonQuery();
+        await connection.CloseAsync();
+    }
+
+    private static string GetReportUpdateCmdString(Workbook workbook)
+    {
         var report = new ReportService(workbook);
         var addStoreValues = new StringBuilder();
         var addDirectionValue = new StringBuilder();
@@ -47,7 +53,7 @@ public static class DatabaseReportService
                 }
             }
         }
-        var cmdText = $"""
+        return $"""
                 delete from Stores
                 where [StoreCode] not in ({addToDelete};
                 merge into Stores as Target using (values
@@ -73,17 +79,41 @@ public static class DatabaseReportService
                 when not matched then
                 insert([Name], [StoreCode], [Plan], [Fact], [Rank]) values(Source.[Name], Source.[StoreCode], Source.[Plan], Source.[Fact], Source.[Rank]);
                 """;
-        var connection = new SqlConnection(TelegramService.ConnectionString);
-        await connection.OpenAsync();
-        var sqlCom = new SqlCommand(cmdText, connection);
-        sqlCom.ExecuteNonQuery();
-        await connection.CloseAsync();
-        sw.Stop();
-        await TelegramService.SendMessage($"БД обновлена, затраченное время обновления {sw.Elapsed}");
     }
 
+    public static async Task UpdateUserStore(User user, string newStoreCode)
+    {
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand($"update users set UserStoreCode = N'{newStoreCode}' where UserId = {user.Id};", connection);
+        await command.ExecuteNonQueryAsync();
+        await connection.CloseAsync();
+    }
 
+    public static async Task UpdateUserState(User user, UserState userState)
+    {
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand($"update users set UserState = {(int)userState} where UserId = {user.Id};", connection);
+        await command.ExecuteNonQueryAsync();
+        await connection.CloseAsync();
+    }
 
+    public static async Task<string> GetUserStore(User user)
+    {
+        var result = string.Empty;
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand($"select UserStoreCode from users where UserId = {user.Id};", connection);
+        var reader = await command.ExecuteReaderAsync();
+        if (!reader.HasRows) return result;
+        while (await reader.ReadAsync())
+        {
+            result = reader.GetString(0);
+        }
+        await reader.CloseAsync();
+        return result;
+    }
     public static async Task<List<string?>> GetStoreList()
     {
         var result = new List<string?>();
@@ -93,13 +123,12 @@ public static class DatabaseReportService
         await using var reader = await command.ExecuteReaderAsync();
         if (!reader.HasRows) return result;
         while (await reader.ReadAsync()) result.Add(reader.GetValue(0).ToString());
-
         return result;
     }
 
     public static async Task<string> GetReportStore(string storeName)
     {
-        var result = string.Empty;
+        var result = new StringBuilder();
         await using var connection = new SqlConnection(TelegramService.ConnectionString);
         await connection.OpenAsync();
         var command = new SqlCommand($"select [rank] from stores where [StoreCode] = '{storeName}';", connection);
@@ -110,12 +139,13 @@ public static class DatabaseReportService
                 while (await reader.ReadAsync())
                 {
                     var rank = reader.GetValue(0).ToString();
-                    result += $"""
+                    var block = $"""
                         Выбранный магазин {storeName} 
                         Общий ранг магазина {rank}
                         Направление/План/Факт/Рейтинг
 
                         """;
+                    result.Append(block);
                 }
             }
         }
@@ -132,25 +162,62 @@ public static class DatabaseReportService
                     var plan = reader.GetInt32(1);
                     var fact = reader.GetInt32(2);
                     var rank = reader.GetValue(3);
-                    var persent = fact / (double)plan;
+                    var percent = fact / (double)plan;
+                    var sb = new StringBuilder();
                     if (string.IsNullOrEmpty(rank.ToString()))
-                        result += $"""
+                    {
+                        string block;
+                        block = $"""
                         -----------------------------------
-                        {name}/План/Факт/% - Рейтинг
-                        {plan}/{fact}/{persent:P1}  - {rank}
+                        {name} / План / Факт / % - Рейтинг
+                        {plan} / {fact} / {percent:P1} - {rank}
 
                         """;
+                        result.Append(block);
+                    }
                     else
-                        result += $"""
+                    {
+                        string block;
+                        block = $"""
                         -----------------------------------
-                        {name}/План/Факт/% 
-                        {plan}/{fact}/{persent:P1} 
+                        {name} / План / Факт / % 
+                        {plan} / {fact} / {percent:P1} 
 
                         """;
+                        result.Append(block);
+                    }
                 }
             }
         }
 
+        return result.ToString();
+    }
+
+    public static async Task<User> GetUser(Update update)
+    {
+        User result = null;
+        var id = update.Message.From.Id;
+        var connection = new SqlConnection(TelegramService.ConnectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand($"select * from users where UserId = {id};", connection);
+        var reader = await command.ExecuteReaderAsync();
+        if (reader.HasRows)
+        {
+            while (await reader.ReadAsync())
+            {
+                var state = reader.GetInt32(1);
+                result = new User(id, state);
+            }
+            await reader.CloseAsync();
+        }
+        else
+        {
+            result = new User(id, (int)UserState.MainMenu);
+            await reader.CloseAsync();
+            command.CommandText = $"insert into users (UserId, UserState) values ({id}, {(int)UserState.MainMenu});";
+            await command.ExecuteNonQueryAsync();
+        }
         return result;
+
     }
 }

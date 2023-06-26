@@ -1,5 +1,5 @@
 ﻿using Telegram.Bot.Types;
-using User = TelegramBot.Services.User;
+using User = TelegramBot.Entities.User.User;
 
 namespace TelegramBot.States;
 

@@ -1,10 +1,11 @@
 ﻿using System.Configuration;
-using System.Data;
 using System.Data.SqlClient;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Entities.User;
 using TelegramBot.States;
+using User = TelegramBot.Entities.User.User;
 
 namespace TelegramBot.Services;
 
@@ -32,7 +33,7 @@ public static class TelegramService
         if (update.Message != null)
         {
             ChatId = update.Message.Chat.Id;
-            var user = await GetUser(update);
+            var user = await DatabaseService.GetUser(update);
 
             _menuState = user.State switch
             {
@@ -45,62 +46,11 @@ public static class TelegramService
         }
     }
 
-    private static async Task<User> GetUser(Update update)
-    {
-        User result = null;
-        var id = update.Message.From.Id;
-        var connection = new SqlConnection(ConnectionString);
-        await connection.OpenAsync();
-        var command = new SqlCommand($"select * from users where UserId = {id};", connection);
-        var reader = await command.ExecuteReaderAsync();
-        if (reader == null)
-        {
-            Console.WriteLine("reader is null");
-        }
-        else
-        {
-            Console.WriteLine("reader isn`t null");
-        }
-        if (reader.HasRows)
-        {
-            while (await reader.ReadAsync())
-            {
-                var state = reader.GetInt32(1);
-                result = new User(id, state);
-            }
-            await reader.CloseAsync();
-        }
-        else
-        {
-            result = new User(id, (int)UserState.MainMenu);
-            await reader.CloseAsync();
-            command.CommandText = $"insert into users (UserId, UserState) values ({id}, {(int)UserState.MainMenu});";
-            await command.ExecuteNonQueryAsync();
-        }
-        return result;
-    }
+    
 
     public static async Task SendMessage(string text, IReplyMarkup markup = null)
     {
         await Bot.SendTextMessageAsync(ChatId, text, replyMarkup: markup);
     }
 
-}
-public class User
-{
-    public long Id { get; set; }
-    public UserState State { get; set; }
-
-    public User(long id, int state)
-    {
-        Id = id;
-        State = (UserState)state;
-    }
-}
-
-public enum UserState
-{
-    MainMenu,
-    ChooseStore,
-    DownloadFile
 }

@@ -1,8 +1,9 @@
 ﻿using System.Data.SqlClient;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Entities.User;
 using TelegramBot.Services;
-using User = TelegramBot.Services.User;
+using User = TelegramBot.Entities.User.User;
 
 namespace TelegramBot.States;
 
@@ -16,7 +17,7 @@ public class ChooseStoreMenu : Menu
     {
         try
         {
-            _storeList = await DatabaseReportService.GetStoreList();
+            _storeList = await DatabaseService.GetStoreList();
         }
         catch (Exception e)
         {
@@ -61,20 +62,15 @@ public class ChooseStoreMenu : Menu
 
     public override async Task NextMenu(MenuState menuState, Update update, User user)
     {
-        var connection = new SqlConnection(TelegramService.ConnectionString);
-        await connection.OpenAsync();
-        var command = new SqlCommand(string.Empty, connection);
         if (_storeList != null)
         {
             foreach (var store in _storeList.Where(store => update.Message.Text == store))
             {
                 await TelegramService.SendMessage($"Был выбран магазин {store}");
-                command.CommandText = $"update users set UserStoreCode = N'{store}' where UserId = {user.Id};";
-                await command.ExecuteNonQueryAsync();
+                await DatabaseService.UpdateUserStore(user, store);
             }
 
-            command.CommandText = $"update users set UserState = {(int)UserState.MainMenu} where UserId = {user.Id};";
-            await command.ExecuteNonQueryAsync();
+            await DatabaseService.UpdateUserState(user, UserState.MainMenu);
             menuState.State = new MainMenu();
             await menuState.State.PrintStateMessage();
         }
@@ -83,14 +79,12 @@ public class ChooseStoreMenu : Menu
             switch (update.Message.Text)
             {
                 case "Главное Меню":
-                    command.CommandText = $"update users set UserState = {(int)UserState.MainMenu} where UserId = {user.Id};";
-                    await command.ExecuteNonQueryAsync();
+                    await DatabaseService.UpdateUserState(user, UserState.MainMenu);
                     menuState.State = new MainMenu();
                     await menuState.State.PrintStateMessage();
                     break;
                 case "Загрузить отчет":
-                    command.CommandText = $"update users set UserState = {(int)UserState.DownloadFile} where UserId = {user.Id};";
-                    await command.ExecuteNonQueryAsync();
+                    await DatabaseService.UpdateUserState(user, UserState.DownloadFile);
                     menuState.State = new DownloadFileMenu();
                     await menuState.State.PrintStateMessage();
                     break;
